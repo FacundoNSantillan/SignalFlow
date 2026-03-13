@@ -1,9 +1,9 @@
-export interface NotificationResponse {
+export interface ProviderResponse {
   success: boolean;
-  messageId: string;
+  messageId?: string;
   error?: string;
 }
 
 export interface INotificationProvider {
-  send(recipient: string, subject: string, body: string, payload?: any): Promise<NotificationResponse>;
+  send(recipient: string, subject: string, body: string): Promise<ProviderResponse>;
 }
