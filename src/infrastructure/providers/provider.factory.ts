@@ -1,17 +1,19 @@
 import { Injectable } from '@nestjs/common';
-import { EmailProvider } from './email.provider';
-import { INotificationProvider } from '../../core/interfaces/notification-provider.interface';
+import { INotificationProvider } from '../../core/interfaces/notification-provider.interface'; 
+import { ResendProvider } from './resend.provider';
 
 @Injectable()
 export class ProviderFactory {
-  constructor(private readonly emailProvider: EmailProvider) {}
+  constructor(
+    private readonly resendProvider: ResendProvider
+  ) {}
 
   getProvider(type: string): INotificationProvider {
-    switch (type.toUpperCase()) {
-      case 'EMAIL':
-        return this.emailProvider;
+    switch (type.toLowerCase()) {
+      case 'email':
+        return this.resendProvider;
       default:
-        throw new Error(`Provider for type ${type} not implemented`);
+        throw new Error(`Provider for ${type} not found`);
     }
   }
 }

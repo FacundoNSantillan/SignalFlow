@@ -1,9 +1,12 @@
 import { Module } from '@nestjs/common';
-import { EmailProvider } from './email.provider';
+import { ResendProvider } from './resend.provider';
 import { ProviderFactory } from './provider.factory';
 
 @Module({
-  providers: [EmailProvider, ProviderFactory],
+  providers: [
+    ResendProvider,
+    ProviderFactory
+  ],
   exports: [ProviderFactory],
 })
 export class ProvidersModule {}
