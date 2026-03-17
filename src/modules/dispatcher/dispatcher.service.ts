@@ -11,16 +11,23 @@ export class DispatcherService {
     @InjectQueue('notifications') private readonly notificationQueue: Queue,
   ) {}
 
-  async dispatchNotification(data: SendNotificationDto) {
+async dispatchNotification(data: SendNotificationDto) {
     this.logger.log(`Encolando notificación para: ${data.recipient}`);
 
-    const job = await this.notificationQueue.add('send-task', data, {
-      attempts: 3,
+    const job = await this.notificationQueue.add('send-notification', data, {
+      attempts: 5, 
       backoff: {
         type: 'exponential',
-        delay: 1000,
+        delay: 3000, 
       },
-      removeOnComplete: true,
+      priority: data.type === 'EMAIL' ? 1 : 2, 
+      removeOnComplete: {
+        age: 3600, 
+        count: 1000,
+      },
+      removeOnFail: {
+        age: 24 * 3600,
+      }
     });
 
     return {

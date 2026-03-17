@@ -19,16 +19,24 @@ export class WorkerService extends WorkerHost {
   async process(job: Job<any, any, string>): Promise<any> {
     const { type, recipient, subject, body } = job.data;
     
-    const notificationRecord = await this.prisma.notification.create({
-      data: {
-        type,
-        recipient,
-        subject,
-        body,
-        jobId: job.id,
-        status: 'PENDING',
-      },
+    this.logger.log(`Procesando intento #${job.attemptsMade + 1} para el Job ${job.id}`);
+
+    let notificationRecord = await this.prisma.notification.findFirst({
+      where: { jobId: job.id }
     });
+
+    if (!notificationRecord) {
+      notificationRecord = await this.prisma.notification.create({
+        data: {
+          type,
+          recipient,
+          subject,
+          body: typeof body === 'string' ? body : JSON.stringify(body),
+          jobId: job.id,
+          status: 'PENDING',
+        },
+      });
+    }
 
     try {
       const provider = this.providerFactory.getProvider(type);
@@ -36,10 +44,10 @@ export class WorkerService extends WorkerHost {
 
       await this.prisma.notification.update({
         where: { id: notificationRecord.id },
-        data: { status: 'COMPLETED' },
+        data: { status: 'COMPLETED', error: null }, 
       });
 
-      this.logger.log(`Job ${job.id} guardado en DB como COMPLETED`);
+      this.logger.log(`Job ${job.id} finalizado con éxito`);
       return result;
 
     } catch (error) {
@@ -47,12 +55,12 @@ export class WorkerService extends WorkerHost {
         where: { id: notificationRecord.id },
         data: { 
           status: 'FAILED',
-          error: error.message 
+          error: `Intento ${job.attemptsMade + 1}: ${error.message}` 
         },
       });
 
-      this.logger.error(`Job ${job.id} marcado como FAILED en DB`);
-      throw error;
+      this.logger.error(`Intento fallido para Job ${job.id}: ${error.message}`);
+      throw error; 
     }
   }
 }

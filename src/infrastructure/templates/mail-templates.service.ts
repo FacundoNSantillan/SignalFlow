@@ -9,22 +9,24 @@ export class MailTemplateService {
 
   compile(templateName: string, context: any): string {
     try {
-      const templateDir = path.join(__dirname); 
-      const templatePath = path.join(templateDir, `${templateName}.hbs`);
+      const templatePath = path.resolve(process.cwd(), 'dist/infrastructure/templates', `${templateName}.hbs`);
       
       this.logger.debug(`Buscando template en: ${templatePath}`);
 
       if (!fs.existsSync(templatePath)) {
-        throw new Error(`El archivo de plantilla no existe en la ruta: ${templatePath}`);
+        const fallbackPath = path.resolve(process.cwd(), 'src/infrastructure/templates', `${templateName}.hbs`);
+        if (fs.existsSync(fallbackPath)) {
+          const content = fs.readFileSync(fallbackPath, 'utf8');
+          return handlebars.compile(content)(context);
+        }
+        throw new Error(`Archivo no encontrado en dist ni en src: ${templatePath}`);
       }
 
       const templateContent = fs.readFileSync(templatePath, 'utf8');
-      const template = handlebars.compile(templateContent);
-      
-      return template(context);
+      return handlebars.compile(templateContent)(context);
     } catch (error) {
       this.logger.error(`Error en MailTemplateService: ${error.message}`);
-      throw error; 
+      throw error;
     }
   }
 }
