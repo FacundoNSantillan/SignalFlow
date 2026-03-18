@@ -4,22 +4,28 @@ import { BullModule } from '@nestjs/bullmq';
 import { BullBoardModule } from '@bull-board/nestjs'; 
 import { ExpressAdapter } from '@bull-board/express'; 
 import { BullMQAdapter } from '@bull-board/api/bullMQAdapter'; 
-import * as Joi from 'joi';
 import { DispatcherModule } from './modules/dispatcher/dispatcher.module';
 import { WorkerModule } from './modules/worker/worker.module';
 import { DatabaseModule } from './infrastructure/database/database.module';
 import { envValidationSchema } from './config/env.validation';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       validationSchema: envValidationSchema, 
-          validationOptions: {
-          allowUnknown: true, 
-          abortEarly: true,
-        },
-      }),
+      validationOptions: {
+        allowUnknown: true, 
+        abortEarly: true,
+      },
+    }),
+
+    ThrottlerModule.forRoot([{
+      ttl: 60000,
+      limit: 10,
+    }]),
 
     BullBoardModule.forRoot({
       route: '/admin/queues',
@@ -45,6 +51,12 @@ import { envValidationSchema } from './config/env.validation';
     DatabaseModule,
     DispatcherModule,
     WorkerModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
