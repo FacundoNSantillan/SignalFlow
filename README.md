@@ -80,7 +80,7 @@ Explorá y probá los endpoints de forma interactiva. La documentación se gener
 
 ### BullBoard (Dashboard de Colas)
 Visualizá el estado en tiempo real. Podés ver jobs completados, fallidos o en espera, y reintentarlos manualmente si es necesario:
-👉 `http://localhost:3000/admin/queues`
+👉 `http://localhost:3000/api/admin/queues`
 
 ---
 
